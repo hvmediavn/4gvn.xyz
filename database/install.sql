@@ -120,6 +120,7 @@ CREATE TABLE `v2_order` (
                             `trade_no` varchar(36) NOT NULL,
                             `callback_no` varchar(255) DEFAULT NULL,
                             `total_amount` int(11) NOT NULL,
+                            `handling_amount` int(11) DEFAULT NULL,
                             `discount_amount` int(11) DEFAULT NULL,
                             `surplus_amount` int(11) DEFAULT NULL COMMENT '剩余价值',
                             `refund_amount` int(11) DEFAULT NULL COMMENT '退款金额',
@@ -145,6 +146,8 @@ CREATE TABLE `v2_payment` (
                               `icon` varchar(255) DEFAULT NULL,
                               `config` text NOT NULL,
                               `notify_domain` varchar(128) DEFAULT NULL,
+                              `handling_fee_fixed` int(11) DEFAULT NULL,
+                              `handling_fee_percent` decimal(5,2) DEFAULT NULL,
                               `enable` tinyint(1) NOT NULL DEFAULT '0',
                               `sort` int(11) DEFAULT NULL,
                               `created_at` int(11) NOT NULL,
@@ -277,8 +280,8 @@ CREATE TABLE `v2_stat_server` (
                                   `id` int(11) NOT NULL AUTO_INCREMENT,
                                   `server_id` int(11) NOT NULL COMMENT '节点id',
                                   `server_type` char(11) NOT NULL COMMENT '节点类型',
-                                  `u` varchar(255) NOT NULL,
-                                  `d` varchar(255) NOT NULL,
+                                  `u` bigint(20) NOT NULL,
+                                  `d` bigint(20) NOT NULL,
                                   `record_type` char(1) NOT NULL COMMENT 'd day m month',
                                   `record_at` int(11) NOT NULL COMMENT '记录时间',
                                   `created_at` int(11) NOT NULL,
@@ -294,8 +297,6 @@ DROP TABLE IF EXISTS `v2_stat_user`;
 CREATE TABLE `v2_stat_user` (
                                 `id` int(11) NOT NULL AUTO_INCREMENT,
                                 `user_id` int(11) NOT NULL,
-                                `server_id` int(11) NOT NULL,
-                                `server_type` char(11) NOT NULL,
                                 `server_rate` decimal(10,2) NOT NULL,
                                 `u` bigint(20) NOT NULL,
                                 `d` bigint(20) NOT NULL,
@@ -304,9 +305,10 @@ CREATE TABLE `v2_stat_user` (
                                 `created_at` int(11) NOT NULL,
                                 `updated_at` int(11) NOT NULL,
                                 PRIMARY KEY (`id`),
-                                KEY `server_id` (`server_id`),
+                                UNIQUE KEY `server_rate_user_id_record_at` (`server_rate`,`user_id`,`record_at`),
                                 KEY `user_id` (`user_id`),
-                                KEY `record_at` (`record_at`)
+                                KEY `record_at` (`record_at`),
+                                KEY `server_rate` (`server_rate`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
@@ -362,8 +364,8 @@ CREATE TABLE `v2_user` (
                            `uuid` varchar(36) NOT NULL,
                            `group_id` int(11) DEFAULT NULL,
                            `plan_id` int(11) DEFAULT NULL,
-                           `remind_expire` tinyint(4) DEFAULT '0',
-                           `remind_traffic` tinyint(4) DEFAULT '0',
+                           `remind_expire` tinyint(4) DEFAULT '1',
+                           `remind_traffic` tinyint(4) DEFAULT '1',
                            `token` char(32) NOT NULL,
                            `remarks` text,
                            `expired_at` bigint(20) DEFAULT '0',
@@ -374,4 +376,4 @@ CREATE TABLE `v2_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
--- 2022-03-04 16:25:43
+-- 2022-03-29 06:56:01

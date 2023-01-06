@@ -459,10 +459,6 @@ ALTER TABLE `v2_plan`
 ALTER TABLE `v2_server`
     RENAME TO `v2_server_v2ray`;
 
-ALTER TABLE `v2_user`
-    CHANGE `remind_expire` `remind_expire` tinyint(4) NULL DEFAULT '0' AFTER `plan_id`,
-    CHANGE `remind_traffic` `remind_traffic` tinyint(4) NULL DEFAULT '0' AFTER `remind_expire`;
-
 ALTER TABLE `v2_payment`
     ADD `icon` varchar(255) COLLATE 'utf8mb4_general_ci' NULL AFTER `name`;
 
@@ -513,3 +509,51 @@ ALTER TABLE `v2_stat_user`
     ADD INDEX `server_id` (`server_id`),
 ADD INDEX `user_id` (`user_id`),
 ADD INDEX `record_at` (`record_at`);
+
+ALTER TABLE `v2_stat_server`
+    CHANGE `u` `u` bigint NOT NULL AFTER `server_type`,
+    CHANGE `d` `d` bigint NOT NULL AFTER `u`;
+
+ALTER TABLE `v2_payment`
+    ADD `handling_fee_fixed` int(11) NULL AFTER `notify_domain`,
+ADD `handling_fee_percent` decimal(5,2) NULL AFTER `handling_fee_fixed`;
+
+ALTER TABLE `v2_order`
+    ADD `handling_amount` int(11) NULL AFTER `total_amount`;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS `path-2022-03-29` $$
+CREATE PROCEDURE `path-2022-03-29`()
+BEGIN
+
+    DECLARE IndexIsThere INTEGER;
+
+SELECT COUNT(1) INTO IndexIsThere
+FROM INFORMATION_SCHEMA.STATISTICS
+WHERE table_name   = 'v2_stat_user'
+  AND   index_name   = 'server_id';
+
+IF IndexIsThere != 0 THEN
+         TRUNCATE TABLE `v2_stat_user`;
+END IF;
+
+END $$
+
+DELIMITER ;
+CALL `path-2022-03-29`();
+DROP PROCEDURE IF EXISTS `path-2022-03-29`;
+
+ALTER TABLE `v2_stat_user`
+    ADD UNIQUE `server_rate_user_id_record_at` (`server_rate`, `user_id`, `record_at`);
+ALTER TABLE `v2_stat_user`
+    ADD INDEX `server_rate` (`server_rate`);
+ALTER TABLE `v2_stat_user`
+DROP INDEX `server_id_user_id_record_at`;
+ALTER TABLE `v2_stat_user`
+DROP INDEX `server_id`;
+
+ALTER TABLE `v2_stat_user`
+DROP `server_id`;
+ALTER TABLE `v2_stat_user`
+DROP `server_type`;
